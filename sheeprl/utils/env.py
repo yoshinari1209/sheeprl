@@ -120,7 +120,9 @@ def make_env(
                         f"only the first one is kept: {cfg.algo.mlp_keys.encoder[0]}"
                     )
                 mlp_key = cfg.algo.mlp_keys.encoder[0]
-                env = gym.wrappers.TransformObservation(env, lambda obs: {mlp_key: obs})
+                env = gym.wrappers.TransformObservation(
+                    env, lambda obs: {mlp_key: obs}, observation_space=env.observation_space
+                )
                 env.observation_space = gym.spaces.Dict({mlp_key: env.observation_space})
         elif isinstance(env.observation_space, gym.spaces.Box) and 2 <= len(env.observation_space.shape) <= 3:
             # Pixel only observation
@@ -136,7 +138,9 @@ def make_env(
                     "Please set at least one cnn key in the config file: `algo.cnn_keys.encoder=[your_cnn_key]`"
                 )
             cnn_key = cfg.algo.cnn_keys.encoder[0]
-            env = gym.wrappers.TransformObservation(env, lambda obs: {cnn_key: obs})
+            env = gym.wrappers.TransformObservation(
+                env, lambda obs: {cnn_key: obs}, observation_space=env.observation_space
+            )
             env.observation_space = gym.spaces.Dict({cnn_key: env.observation_space})
 
         if (
@@ -195,11 +199,13 @@ def make_env(
 
             return obs
 
-        env = gym.wrappers.TransformObservation(env, transform_obs)
+        new_obs_space = gym.spaces.Dict(env.observation_space.spaces.copy())
         for k in cnn_keys:
-            env.observation_space[k] = gym.spaces.Box(
+            new_obs_space[k] = gym.spaces.Box(
                 0, 255, (1 if cfg.env.grayscale else 3, cfg.env.screen_size, cfg.env.screen_size), np.uint8
             )
+        env = gym.wrappers.TransformObservation(env, transform_obs, observation_space=new_obs_space)
+        env.observation_space = new_obs_space
 
         if cnn_keys is not None and len(cnn_keys) > 0 and cfg.env.frame_stack > 1:
             if cfg.env.frame_stack_dilation <= 0:

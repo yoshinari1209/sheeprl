@@ -5,7 +5,10 @@ from dotenv import load_dotenv
 
 try:
     import ale_py
-    ale_py.register_envs()
+    if hasattr(ale_py, "register_envs"):
+        ale_py.register_envs()
+    elif hasattr(ale_py, "register_v5_envs"):
+        ale_py.register_v5_envs()
 except ImportError:
     pass  # ale_py not installed, skip Atari environment registration
 

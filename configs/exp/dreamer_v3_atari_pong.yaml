@@ -4,7 +4,7 @@ defaults:
   - dreamer_v3
   - override /algo: dreamer_v3_XS
   - override /env: atari
-  - override /logger@logger: wandb
+  - override /logger@metric.logger: wandb
   - _self_
 
 # ===== Names (affects WandB project/name and local log dir) =====

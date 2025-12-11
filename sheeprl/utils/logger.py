@@ -10,13 +10,25 @@ from lightning.fabric.utilities.cloud_io import _is_dir, get_filesystem
 
 
 def get_logger(fabric: Fabric, cfg: Dict[str, Any]) -> Optional[Logger]:
-    # Set logger only on rank-0 but share the logger directory: since we don't know
-    # what is happening during the `fabric.save()` method, at least we assure that all
-    # ranks save under the same named folder.
-    # As a plus, rank-0 sets the time uniquely for everyone
+    """Instantiate the experiment logger according to the metric configuration.
+
+    The logger is created only on rank-0 when logging is enabled. For loggers that
+    expect the experiment name and output directory (e.g. TensorBoard, Weights &
+    Biases), the function aligns those values with the Hydra run folder to keep all
+    artifacts together.
+
+    Args:
+        fabric (Fabric): The fabric instance orchestrating the run.
+        cfg (Dict[str, Any]): The Hydra configuration containing the metric settings.
+
+    Returns:
+        Optional[Logger]: The instantiated logger when logging is enabled, otherwise
+        ``None``.
+    """
     logger = None
     if fabric.is_global_zero and cfg.metric.log_level > 0:
-        if "tensorboard" in cfg.metric.logger._target_.lower():
+        target_name = cfg.metric.logger._target_.lower()
+        if "tensorboard" in target_name:
             root_dir = os.path.join("logs", "runs", cfg.root_dir)
             if root_dir != cfg.metric.logger.root_dir:
                 warnings.warn(
@@ -32,22 +44,40 @@ def get_logger(fabric: Fabric, cfg: Dict[str, Any]) -> Optional[Logger]:
                 )
             cfg.metric.logger.root_dir = root_dir
             cfg.metric.logger.name = cfg.run_name
+        elif "wandb" in target_name:
+            save_dir = os.path.join("logs", "runs", cfg.root_dir)
+            if save_dir != getattr(cfg.metric.logger, "save_dir", save_dir):
+                warnings.warn(
+                    "The specified save directory for the WandbLogger is different from the experiment one, "
+                    "so the logger one will be ignored and replaced with the experiment root directory",
+                    UserWarning,
+                )
+            if cfg.run_name != getattr(cfg.metric.logger, "name", cfg.run_name):
+                warnings.warn(
+                    "The specified name for the WandbLogger is different from the `run_name` of the experiment, "
+                    "so the logger one will be ignored and replaced with the experiment `run_name`",
+                    UserWarning,
+                )
+            cfg.metric.logger.save_dir = save_dir
+            cfg.metric.logger.name = cfg.run_name
         logger = hydra.utils.instantiate(cfg.metric.logger, _convert_="all")
     return logger
 
 
 def get_log_dir(fabric: Fabric, root_dir: str, run_name: str, share: bool = True) -> str:
-    """Return and, if necessary, create the log directory. If there are more than one processes,
-    the rank-0 process shares the directory to the others (if the `share` parameter is set to `True`).
+    """Return the log directory of the experiment, creating it if needed.
+
+    The directory is computed on rank-0 and, when requested, broadcast to other
+    processes so that all workers write under the same path.
 
     Args:
-        fabric (Fabric): the fabric instance.
-        root_dir (str): the root directory of the experiment.
-        run_name (str): the name of the experiment.
-        share (bool): whether or not to share the `log_dir` among processes.
+        fabric (Fabric): The fabric instance coordinating distributed execution.
+        root_dir (str): The root directory of the experiment.
+        run_name (str): The name of the experiment.
+        share (bool): Whether to broadcast the resolved log directory to all ranks.
 
     Returns:
-        The log directory of the experiment.
+        str: The log directory of the experiment.
     """
     world_collective = TorchCollective()
     if fabric.world_size > 1 and share:

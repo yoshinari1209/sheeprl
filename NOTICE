@@ -1,0 +1,8 @@
+This project is a fork of Eclectic-Sheep/sheeprl (Apache License 2.0, Copyright 2023 Eclectic Sheep Team).
+
+Modifications in this fork (2024-11-XX):
+- Added Python 3.12 support: updated core dependencies (gymnasium 1.2, torch >=2.3, lightning >=2.3, etc.) and adjusted compatibility code (RecordVideo wrapper).
+- Marked MineRL / MineDojo extras as Python <3.12 only due to upstream gym limitations; updated extras for mujoco/dmc/diambra/atari/box2d/supermario/mlflow.
+- Updated documentation to reflect Python 3.12 support and non-supported extras; refreshed badges.
+- Minor test/environment fixes for gymnasium 1.2 (dummy env spaces and CarRacing version).
+- Added optional Weights & Biases logging (wandb >=0.16, MIT license) aligned with the Apache 2.0 licensing of this fork; users must supply their own API key (not included in this repository).

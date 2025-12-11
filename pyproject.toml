@@ -24,21 +24,21 @@ maintainers = [
 keywords = ["reinforcement", "machine", "learning", "distributed", "production"]
 license = { file = "LICENSE" }
 readme = { file = "docs/README.md", content-type = "text/markdown" }
-requires-python = ">=3.8,<3.12"
+requires-python = ">=3.8,<3.13"
 classifiers = ["Programming Language :: Python", "Topic :: Scientific/Engineering :: Artificial Intelligence"]
 dependencies = [
-  "gymnasium==0.29.*",
-  "pygame >=2.1.3",
-  "moviepy>=1.0.3",
+  "gymnasium>=1.2,<1.3",
+  "pygame>=2.5",
+  "moviepy>=2.2,<3.0",
   "tensorboard>=2.10",
   "python-dotenv>=1.0.0",
-  "lightning>=2.0",
-  "lightning-utilities<=0.9",
-  "hydra-core==1.3.0",
-  "torchmetrics",
+  "lightning>=2.3,<2.7",
+  "lightning-utilities>=0.11,<0.16",
+  "hydra-core>=1.3.0,<1.4",
+  "torchmetrics>=1.3,<2.0",
   "rich==13.5.*",
-  "opencv-python==4.8.0.*",
-  "torch>=2.0,!=2.2.0",
+  "opencv-python>=4.10.0,<5.0.0",
+  "torch>=2.3,<2.10",
   "numpy<2.0"
 ]
 dynamic = ["version"]
@@ -74,20 +74,29 @@ dev = [
   "autoflake==2.2.1",
   "ruff==0.1.11",
 ]
-mujoco = ["mujoco>=2.3.3", "gymnasium[mujoco]==0.29.*"]
-dmc = ["dm_control>=1.0.12"]
-box2d = ["gymnasium[box2d]==0.29.*"]
+mujoco = ["mujoco>=3.1,<3.5", "gymnasium[mujoco]>=1.2,<1.3"]
+dmc = ["dm_control>=1.0.34"]
+box2d = ["gymnasium[box2d]>=1.2,<1.3"]
 atari = [
-  "gymnasium[atari]==0.29.*",
-  "gymnasium[accept-rom-license]==0.29.*",
-  "gymnasium[other]==0.29.*",
+  "gymnasium[atari]>=1.2,<1.3",
+  "gymnasium[accept-rom-license]>=1.2,<1.3",
+  "gymnasium[other]>=1.2,<1.3",
 ]
-minedojo = ["minedojo==0.1", "importlib_resources==5.12.0", "gym==0.21.0"]
-minerl = ["setuptools==66.0.0", "minerl==0.4.4", "gym==0.19.0"]
-diambra = ["diambra==0.0.17", "diambra-arena==2.2.6"]
+minedojo = [
+  "minedojo==0.1; python_version<'3.12'",
+  "importlib_resources==5.12.0; python_version<'3.12'",
+  "gym==0.21.0; python_version<'3.12'",
+]
+minerl = [
+  "setuptools==66.0.0; python_version<'3.12'",
+  "minerl==0.4.4; python_version<'3.12'",
+  "gym==0.19.0; python_version<'3.12'",
+]
+diambra = ["diambra==0.0.20", "diambra-arena==2.2.7"]
 crafter = ["crafter==1.8.3"]
-mlflow = ["mlflow==2.11.1"]
-supermario = ["gym-super-mario-bros==7.4.0", "gym<0.26"]
+mlflow = ["mlflow==3.7.0"]
+supermario = ["gym-super-mario-bros==7.4.0", "gym==0.26.2", "gym<0.27"]
+wandb = ["wandb>=0.16.0"]
 
 [tool.ruff]
 line-length = 120
@@ -219,4 +228,3 @@ push = true
 "sheeprl/__init__.py" = [
     '^__version__ = "{version}"$',
 ]
-

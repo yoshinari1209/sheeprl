@@ -1,0 +1,11 @@
+_target_: lightning.fabric.loggers.WandbLogger
+name: ${run_name}
+project: ${exp_name}
+save_dir: logs/runs/${root_dir}
+id: null
+entity: null
+group: null
+job_type: null
+tags: []
+log_model: False
+prefix: ""

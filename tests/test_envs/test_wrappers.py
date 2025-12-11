@@ -13,8 +13,11 @@ ENVIRONMENTS = {
 
 
 def test_mask_velocities_fail():
+    try:
+        env = gym.make("CarRacing-v3")
+    except gym.error.DependencyNotInstalled:
+        pytest.skip("gymnasium[box2d] is not installed")
     with pytest.raises(NotImplementedError):
-        env = gym.make("CarRacing-v2")
         env = MaskVelocityWrapper(env)
 
 

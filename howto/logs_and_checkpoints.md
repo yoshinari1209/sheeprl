@@ -47,7 +47,7 @@ where
 So, if one wants to disable everything related to logging, he/she can set `log_level` to $0$ if one wants to disable the timer, he/she can set `disable_timer` to `True`.
 
 ### Loggers
-Two loggers are made available: the Tensorboard logger and the MLFlow one. In any case, it is possible to define or choose another logger.
+Three loggers are made available: the Tensorboard logger, the Weights & Biases one, and the MLFlow one. In any case, it is possible to define or choose another logger.
 The configurations of the loggers are under the `./sheeprl/configs/logger/` folder.
 
 #### Tensorboard
@@ -103,6 +103,35 @@ python sheeprl.py exp=ppo exp_name=ppo-cartpole logger@metric.logger=mlflow
 > [!NOTE]
 >
 > If you are using an MLFlow server, you can specify the `tracking_uri` in the config file or with the `MLFLOW_TRACKING_URI` environment variable (that is the default value in the configs).
+
+#### Weights & Biases
+SheepRL can also log metrics to [Weights & Biases](https://wandb.ai/).
+
+```yaml
+# ./sheeprl/configs/logger/wandb.yaml
+
+# For more information, check https://lightning.ai/docs/fabric/stable/api/generated/lightning.fabric.loggers.WandbLogger.html
+_target_: lightning.fabric.loggers.WandbLogger
+name: ${run_name}
+project: ${exp_name}
+save_dir: logs/runs/${root_dir}
+id: null
+entity: null
+group: null
+job_type: null
+tags: []
+log_model: False
+prefix: ""
+```
+
+Install the optional dependency and select the logger from the CLI:
+
+```bash
+pip install -e .[wandb]
+python sheeprl.py exp=ppo exp_name=ppo-cartpole logger@metric.logger=wandb
+```
+
+By default W&B will run online; configure your account via `WANDB_API_KEY` and optionally override `project`/`entity` with `WANDB_PROJECT`/`WANDB_ENTITY` or via CLI (`metric.logger.project=...`). To avoid network usage, set `WANDB_MODE=offline` before launching the run; logs will be stored under `logs/runs/<root_dir>/`.
 
 ### Logged metrics
 

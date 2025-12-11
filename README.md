@@ -4,6 +4,9 @@
 [![Python 3.9](https://img.shields.io/badge/python-3.9-blue.svg)](https://www.python.org/downloads/release/python-390/)
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-3100/)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
+
+> Fork note: This repository is a fork of Eclectic-Sheep/sheeprl. Changes specific to this fork (e.g., Python 3.12 support and dependency updates) are summarized in `NOTICE`.
 
 <p align="center">
   <img src="./assets/images/logo.svg" style="width:40%">
@@ -237,8 +240,8 @@ The environments supported by sheeprl are:
 | Mujoco (Gymnasium) | `pip install sheeprl[mujoco]`   | [how_to/mujoco](./howto/learn_in_dmc.md)        | :heavy_check_mark: |
 | Atari              | `pip install sheeprl[atari]`    | [how_to/atari](./howto/learn_in_atari.md)       | :heavy_check_mark: |
 | DeepMind Control   | `pip install sheeprl[dmc]`      | [how_to/dmc](./howto/learn_in_dmc.md)           | :heavy_check_mark: |
-| MineRL             | `pip install sheeprl[minerl]`   | [how_to/minerl](./howto/learn_in_minerl.md)     | :heavy_check_mark: |
-| MineDojo           | `pip install sheeprl[minedojo]` | [how_to/minedojo](./howto/learn_in_minedojo.md) | :heavy_check_mark: |
+| MineRL             | `pip install sheeprl[minerl]`   | [how_to/minerl](./howto/learn_in_minerl.md)     | :warning: *Python &lt; 3.12* |
+| MineDojo           | `pip install sheeprl[minedojo]` | [how_to/minedojo](./howto/learn_in_minedojo.md) | :warning: *Python &lt; 3.12* |
 | DIAMBRA            | `pip install sheeprl[diambra]`  | [how_to/diambra](./howto/learn_in_diambra.md)   | :heavy_check_mark: |
 | Crafter            | `pip install sheeprl[crafter]`  | https://github.com/danijar/crafter              | :heavy_check_mark: |
 | Super Mario Bros   | `pip install sheeprl[supermario]` | https://github.com/Kautenja/gym-super-mario-bros/tree/master | :heavy_check_mark: |
@@ -274,6 +277,8 @@ pip install sheeprl
 > [!NOTE]
 > 
 > To install optional dependencies one can run for example `pip install sheeprl[atari,box2d,dev,mujoco,test]`
+>
+> MineRL と MineDojo の extras は上流依存（古い gym）の都合で **Python 3.12 ではインストールできません**。これらを使う場合は Python 3.11 以前をご利用ください。
 
 For a detailed information about all the optional dependencies you can install please have a look at the [What](#what) section
 
@@ -362,6 +367,10 @@ pip install "sheeprl[atari,box2d,mujoco,dev,test] @ git+https://github.com/Eclec
 > 
 > If you want to install the *minedojo* or *minerl* environment support, Java JDK 8 is required: you can install it by following the instructions at this [link](https://docs.minedojo.org/sections/getting_started/install.html#on-ubuntu-20-04).
 
+> [!IMPORTANT]
+> 
+> MineDojo / MineRL depend on legacy gym versions that do not yet ship wheels for Python 3.12. Use Python 3.11 or earlier when installing these extras.
+
 > [!CAUTION]
 >
 > **MineRL** and **MineDojo** environments have **conflicting requirements**, so **DO NOT install them together** with the `pip install sheeprl[minerl,minedojo]` command, but instead **install them individually** with either the command `pip install sheeprl[minerl]` or `pip install sheeprl[minedojo]` before running an experiment with the MineRL or MineDojo environment, respectively. 
@@ -414,6 +423,15 @@ Once you trained an agent, a new folder called `logs` will be created, containin
 ```bash
 tensorboard --logdir logs
 ```
+
+If you prefer [Weights & Biases](https://wandb.ai/), install the optional extra and select the logger from the CLI:
+
+```bash
+pip install -e .[wandb]
+python sheeprl.py exp=ppo exp_name=ppo-cartpole logger@metric.logger=wandb
+```
+
+Set `WANDB_API_KEY` (and optionally `WANDB_PROJECT`/`WANDB_ENTITY`) for online runs; use `WANDB_MODE=offline` to store logs locally under `logs/runs/`.
 
 https://github.com/Eclectic-Sheep/sheeprl/assets/7341604/46ad4acd-180d-449d-b46a-25b4a1f038d9
 

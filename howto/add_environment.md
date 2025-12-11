@@ -37,7 +37,7 @@ After that, you must create a new config file and place it in the `./sheeprl/con
 
 > [!NOTE]
 >
-> It could be necessary to define the `metadata` property containing metadata information about the environment. It is used by the `gym.experimental.wrappers.RecordVideoV0` wrapper, which is responsible for capturing the video of the episode.
+> It could be necessary to define the `metadata` property containing metadata information about the environment. It is used by the `gym.wrappers.RecordVideo` wrapper, which is responsible for capturing the video of the episode.
 
 ## Create from Scratch
 If one needs to create a custom environment, then he/she can define a class by inheriting from the `gymnasium.Env` class. So, you need to define the `__init__` function for initializing the required properties, then define the `step`, `reset`, `close`, and `render` functions.

@@ -1,0 +1,54 @@
+# @package _global_
+
+defaults:
+  - dreamer_v3
+  - override /algo: dreamer_v3_XS
+  - override /env: atari
+  - override /logger@logger: wandb
+  - _self_
+
+# ===== Names (affects WandB project/name and local log dir) =====
+exp_name: dreamer_v3_atari_pong
+run_name: ${now:%Y-%m-%d_%H-%M-%S}_${exp_name}_${seed}
+root_dir: ${exp_name}/${env.id}
+
+# ===== Algorithm (DreamerV3) =====
+algo:
+  total_steps: 500_000
+  per_rank_batch_size: 16
+  per_rank_sequence_length: 64
+  cnn_keys:
+    encoder: [rgb]
+    decoder: [rgb]
+  mlp_keys:
+    encoder: []
+    decoder: []
+
+# ===== Replay Buffer =====
+buffer:
+  share_data: False
+  size: 200_000
+  memmap: False  # Colabでのトラブル回避
+
+# ===== Checkpoint =====
+checkpoint:
+  save_last: True
+  every: 100_000
+  keep_last: 5
+
+# ===== Environment (Atari Pong) =====
+env:
+  id: PongNoFrameskip-v4
+  num_envs: 4
+  sync_env: True  # AsyncVectorEnvではなくSyncVectorEnvを使用
+
+# ===== Logger (Weights & Biases) =====
+logger:
+  project: ${exp_name}
+  name: ${run_name}
+  # project/name はデフォルトで exp_name/run_name に解決される
+  tags: ["dreamer_v3", "pong"]
+
+# ===== Metric =====
+metric:
+  log_every: 100

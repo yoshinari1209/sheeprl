@@ -424,6 +424,15 @@ Once you trained an agent, a new folder called `logs` will be created, containin
 tensorboard --logdir logs
 ```
 
+If you prefer [Weights & Biases](https://wandb.ai/), install the optional extra and select the logger from the CLI:
+
+```bash
+pip install -e .[wandb]
+python sheeprl.py exp=ppo exp_name=ppo-cartpole logger@metric.logger=wandb
+```
+
+Set `WANDB_API_KEY` (and optionally `WANDB_PROJECT`/`WANDB_ENTITY`) for online runs; use `WANDB_MODE=offline` to store logs locally under `logs/runs/`.
+
 https://github.com/Eclectic-Sheep/sheeprl/assets/7341604/46ad4acd-180d-449d-b46a-25b4a1f038d9
 
 ### :nerd_face: More about running an algorithm

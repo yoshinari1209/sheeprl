@@ -96,6 +96,7 @@ diambra = ["diambra==0.0.20", "diambra-arena==2.2.7"]
 crafter = ["crafter==1.8.3"]
 mlflow = ["mlflow==3.7.0"]
 supermario = ["gym-super-mario-bros==7.4.0", "gym==0.26.2", "gym<0.27"]
+wandb = ["wandb>=0.16.0"]
 
 [tool.ruff]
 line-length = 120

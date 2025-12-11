@@ -26,8 +26,10 @@ def _ensure_numpy_compatibility() -> None:
         None: This function mutates the imported NumPy module in place.
     """
 
-    legacy_aliases = {"float": np.float32, "int": np.int64, "bool": bool}
+    legacy_aliases = {"float": np.float32, "int": np.int64, "bool": np.bool_}
     for alias, target in legacy_aliases.items():
+        if hasattr(np, alias):
+            continue
         try:
             setattr(np, alias, target)
         except (AttributeError, TypeError):

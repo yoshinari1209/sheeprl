@@ -607,15 +607,44 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):
                         )
                         step_data["is_first"][i] = np.ones_like(step_data["is_first"][i])
 
-            if cfg.metric.log_level > 0 and "final_info" in infos:
-                for i, agent_ep_info in enumerate(infos["final_info"]):
-                    if agent_ep_info is not None:
-                        ep_rew = agent_ep_info["episode"]["r"]
-                        ep_len = agent_ep_info["episode"]["l"]
-                        if aggregator and not aggregator.disabled:
-                            aggregator.update("Rewards/rew_avg", ep_rew)
-                            aggregator.update("Game/ep_len_avg", ep_len)
-                        fabric.print(f"Rank-0: policy_step={policy_step}, reward_env_{i}={ep_rew[-1]}")
+            if cfg.metric.log_level > 0:
+                if "final_info" in infos:
+                    episode_infos = infos["final_info"]
+                    for i, agent_ep_info in enumerate(episode_infos):
+                        if agent_ep_info is not None:
+                            episode_dict = agent_ep_info.get("episode", agent_ep_info)
+                            ep_rew = episode_dict["r"]
+                            ep_len = episode_dict["l"]
+                            if aggregator and not aggregator.disabled:
+                                aggregator.update("Rewards/rew_avg", ep_rew)
+                                aggregator.update("Game/ep_len_avg", ep_len)
+                            rew_value = ep_rew[-1] if hasattr(ep_rew, "__len__") else ep_rew
+                            fabric.print(f"Rank-0: policy_step={policy_step}, reward_env_{i}={rew_value}")
+                elif "episode" in infos:
+                    # Gymnasium vector envs (autoreset NEXT_STEP) put episode stats in `infos["episode"]`
+                    ep_info = infos["episode"]
+                    if isinstance(ep_info, dict) and "_episode" in ep_info:
+                        mask = ep_info["_episode"]
+                        for i, done in enumerate(mask):
+                            if done:
+                                ep_rew = ep_info["r"][i]
+                                ep_len = ep_info["l"][i]
+                                if aggregator and not aggregator.disabled:
+                                    aggregator.update("Rewards/rew_avg", ep_rew)
+                                    aggregator.update("Game/ep_len_avg", ep_len)
+                                fabric.print(f"Rank-0: policy_step={policy_step}, reward_env_{i}={ep_rew}")
+                    else:
+                        episode_infos = ep_info if isinstance(ep_info, (list, tuple)) else [ep_info]
+                        for i, agent_ep_info in enumerate(episode_infos):
+                            if agent_ep_info is not None:
+                                episode_dict = agent_ep_info.get("episode", agent_ep_info)
+                                ep_rew = episode_dict["r"]
+                                ep_len = episode_dict["l"]
+                                if aggregator and not aggregator.disabled:
+                                    aggregator.update("Rewards/rew_avg", ep_rew)
+                                    aggregator.update("Game/ep_len_avg", ep_len)
+                                rew_value = ep_rew[-1] if hasattr(ep_rew, "__len__") else ep_rew
+                                fabric.print(f"Rank-0: policy_step={policy_step}, reward_env_{i}={rew_value}")
 
             # Save the real next observation
             real_next_obs = copy.deepcopy(next_obs)

@@ -5,6 +5,7 @@ import warnings
 from pathlib import Path
 from typing import Any, Dict
 
+import gymnasium as gym
 import hydra
 import torch
 from lightning import Fabric
@@ -70,6 +71,10 @@ def run_algorithm(cfg: Dict[str, Any]):
 
     # Set the distribution validate_args once here
     Distribution.set_default_validate_args(cfg.distribution.validate_args)
+
+    # Suppress gymnasium environment re-registration warnings.
+    gym.logger.min_level = gym.logger.ERROR
+
 
     # Given the algorithm's name, retrieve the module where
     # 'cfg.algo.name'.py is contained; from there retrieve the

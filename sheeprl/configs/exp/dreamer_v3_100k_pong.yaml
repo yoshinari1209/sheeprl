@@ -3,66 +3,61 @@
 defaults:
   - dreamer_v3
   - override /algo: dreamer_v3_XS
-  - override /env: gym
+  - override /env: atari
   - override /logger@metric.logger: wandb
   - _self_
 
 # ===== Names =====
-exp_name: dreamer_v3_cartpole_vector
+exp_name: dreamer_v3_100k_pong
 run_name: ${now:%Y-%m-%d_%H-%M-%S}_${exp_name}_${seed}
 root_dir: ${exp_name}/${env.id}
-seed: 0
+seed: 5
 
 # ===== Algorithm (DreamerV3) =====
 algo:
   total_steps: 100_000
+  learning_starts: 1_024
   per_rank_batch_size: 16
-  per_rank_sequence_length: 32
-  dormant:
-    enabled: true        # 休眠ニューロン計測を有効化
-    tau: 0.25            # 休眠とみなすスコア閾値
-    interval: 100        # 何ステップごとに計測するか
-    batch_size: 256      # 計測に使うサンプルバッチサイズ
-    sequence_length: ${algo.per_rank_sequence_length}  # 計測用シーケンス長
-    num_batches: 1       # 計測で繰り返し取るバッチ数
+  per_rank_sequence_length: 64
   cnn_keys:
+    encoder: [rgb]
+    decoder: [rgb]
+  mlp_keys:
     encoder: []
     decoder: []
-  mlp_keys:
-    encoder: [state]
-    decoder: [state]
 
 # ===== Replay Buffer =====
 buffer:
   share_data: False
-  size: 50_000
-  memmap: False
+  size: 100_000
+  memmap: True
+  checkpoint: True
 
 # ===== Checkpoint =====
 checkpoint:
   save_last: True
-  every: 20_000
+  every: 2_000
   keep_last: 3
 
-# ===== Environment (Gym CartPole) =====
+# ===== Environment (Atari Pong) =====
 env:
-  id: CartPole-v1
-  num_envs: 4
+  id: PongNoFrameskip-v4
+  num_envs: 1
   sync_env: True
-  action_repeat: 1
-  max_episode_steps: 500
+  action_repeat: 4
+  max_episode_steps: 27_000
   capture_video: True
-  video_every: 20
+  video_every: 5_000
 
-# ===== Logger (TensorBoard) =====
+# ===== Logger (Weights & Biases) =====
 logger:
   project: ${exp_name}
   name: ${run_name}
-  tags: ["dreamer_v3", "cartpole", "vector"]
+  tags: ["dreamer_v3", "pong", "atari", "100k"]
 
 # ===== Metric =====
 metric:
-  log_every: 100
+  log_every: 1_000
   aggregator:
     metrics:
       Rewards/rew_avg:

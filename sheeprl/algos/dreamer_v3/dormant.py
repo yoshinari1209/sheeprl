@@ -108,6 +108,31 @@ class ActivationRecorder:
             results["all"] = (scores <= self.tau).float().mean().item()
         return results
 
+    def compute_aggregated(self, keys: Sequence[str], name: str) -> Dict[str, float]:
+        """Compute a dormant ratio aggregating selected modules.
+
+        Args:
+            keys (Sequence[str]): Module names to aggregate.
+            name (str): Name of the resulting aggregated metric.
+
+        Returns:
+            Dict[str, float]: A single-entry dict ``{name: ratio}`` if any key had
+            data, otherwise an empty dict.
+        """
+        means = []
+        for key in keys:
+            stat = self._stats.get(key)
+            if stat is None or stat.count == 0:
+                continue
+            mean_act = stat.sum_abs / float(stat.count)
+            means.append(mean_act)
+        if not means:
+            return {}
+        stacked = torch.cat(means)
+        layer_mean = stacked.mean()
+        scores = stacked / (layer_mean + 1e-8)
+        return {name: (scores <= self.tau).float().mean().item()}
+
 
 def _get_module(module: nn.Module) -> nn.Module:
     """Return the wrapped module if present.
@@ -163,6 +188,7 @@ def measure_dormant_neurons_dreamer_v3(
     observation_model = _get_module(world_model.observation_model)
     reward_model = _get_module(world_model.reward_model)
     continue_model = _get_module(world_model.continue_model) if world_model.continue_model else None
+    world_penultimate_keys: list[str] = []
 
     # World model modules
     wm_recorder.add_module("world_encoder_cnn", getattr(encoder, "cnn_encoder", None))
@@ -176,11 +202,15 @@ def measure_dormant_neurons_dreamer_v3(
     mlp_decoder = getattr(observation_model, "mlp_decoder", None)
     if cnn_decoder is not None:
         wm_recorder.add_module("world_decoder_cnn", _get_module(cnn_decoder).model[0])
+        world_penultimate_keys.append("world_decoder_cnn")
     if mlp_decoder is not None:
         wm_recorder.add_module("world_decoder_mlp", _get_module(mlp_decoder).model)
+        world_penultimate_keys.append("world_decoder_mlp")
     wm_recorder.add_module("world_reward", _get_module(reward_model).model)
+    world_penultimate_keys.append("world_reward")
     if continue_model is not None:
         wm_recorder.add_module("world_continue", _get_module(continue_model).model)
+        world_penultimate_keys.append("world_continue")
 
     # Actor modules
     actor_module = _get_module(actor)
@@ -259,6 +289,7 @@ def measure_dormant_neurons_dreamer_v3(
 
     results: Dict[str, float] = {}
     results.update({k: v for k, v in wm_recorder.compute().items()})
+    results.update(wm_recorder.compute_aggregated(world_penultimate_keys, "world_penultimate"))
     actor_res = actor_recorder.compute()
     critic_res = critic_recorder.compute()
     if actor_penultimate_name in actor_res:

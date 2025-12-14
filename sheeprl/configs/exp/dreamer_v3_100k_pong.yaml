@@ -1,0 +1,68 @@
+# @package _global_
+
+defaults:
+  - dreamer_v3
+  - override /algo: dreamer_v3_XS
+  - override /env: atari
+  - override /logger@metric.logger: wandb
+  - _self_
+
+# ===== Names =====
+exp_name: dreamer_v3_100k_pong
+run_name: ${now:%Y-%m-%d_%H-%M-%S}_${exp_name}_${seed}
+root_dir: ${exp_name}/${env.id}
+seed: 5
+
+# ===== Algorithm (DreamerV3) =====
+algo:
+  total_steps: 100_000
+  learning_starts: 1_024
+  per_rank_batch_size: 16
+  per_rank_sequence_length: 64
+  cnn_keys:
+    encoder: [rgb]
+    decoder: [rgb]
+  mlp_keys:
+    encoder: []
+    decoder: []
+
+# ===== Replay Buffer =====
+buffer:
+  share_data: False
+  size: 100_000
+  memmap: True
+  checkpoint: True
+
+# ===== Checkpoint =====
+checkpoint:
+  save_last: True
+  every: 2_000
+  keep_last: 3
+
+# ===== Environment (Atari Pong) =====
+env:
+  id: PongNoFrameskip-v4
+  num_envs: 1
+  sync_env: True
+  action_repeat: 4
+  max_episode_steps: 27_000
+  capture_video: True
+  video_every: 5_000
+
+# ===== Logger (Weights & Biases) =====
+logger:
+  project: ${exp_name}
+  name: ${run_name}
+  tags: ["dreamer_v3", "pong", "atari", "100k"]
+
+# ===== Metric =====
+metric:
+  log_every: 1_000
+  aggregator:
+    metrics:
+      Rewards/rew_avg:
+        _target_: torchmetrics.MeanMetric
+        sync_on_compute: ${metric.sync_on_compute}
+      Game/ep_len_avg:
+        _target_: torchmetrics.MeanMetric
+        sync_on_compute: ${metric.sync_on_compute}

@@ -1,4 +1,4 @@
-_target_: lightning.fabric.loggers.WandbLogger
+_target_: lightning.pytorch.loggers.WandbLogger
 name: ${run_name}
 project: ${exp_name}
 save_dir: logs/runs/${root_dir}

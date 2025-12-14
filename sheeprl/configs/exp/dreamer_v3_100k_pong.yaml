@@ -25,6 +25,13 @@ algo:
   mlp_keys:
     encoder: []
     decoder: []
+  dormant:
+    enabled: True
+    tau: 0.25
+    interval: 100
+    batch_size: 256
+    sequence_length: ${algo.per_rank_sequence_length}
+    num_batches: 1
 
 # ===== Replay Buffer =====
 buffer:

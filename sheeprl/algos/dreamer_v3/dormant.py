@@ -215,19 +215,27 @@ def measure_dormant_neurons_dreamer_v3(
     # Actor modules
     actor_module = _get_module(actor)
     actor_penultimate_name = "actor_penultimate"
-    for idx, module in enumerate(actor_module.model):
-        if isinstance(module, nn.Linear):
-            actor_recorder.add_module(f"actor_layer_{idx}", module)
-    actor_recorder.add_module(actor_penultimate_name, actor_module.model)
+    actor_recorder.add_module(actor_penultimate_name, getattr(actor_module, "model", None))
+    actor_linear_modules = (
+        [m for m in getattr(actor_module, "model", []).modules() if isinstance(m, nn.Linear)]
+        if hasattr(getattr(actor_module, "model", None), "modules")
+        else []
+    )
+    for idx, module in enumerate(actor_linear_modules):
+        actor_recorder.add_module(f"actor_layer_{idx}", module)
 
     # Critic modules
     critic_module = _get_module(critic)
+    critic_linear_modules = (
+        [m for m in getattr(critic_module, "model", []).modules() if isinstance(m, nn.Linear)]
+        if hasattr(getattr(critic_module, "model", None), "modules")
+        else []
+    )
     critic_linear_names: list[str] = []
-    for idx, module in enumerate(critic_module.model):
-        if isinstance(module, nn.Linear):
-            name = f"critic_layer_{idx}"
-            critic_linear_names.append(name)
-            critic_recorder.add_module(name, module)
+    for idx, module in enumerate(critic_linear_modules):
+        name = f"critic_layer_{idx}"
+        critic_linear_names.append(name)
+        critic_recorder.add_module(name, module)
     critic_penultimate_name = critic_linear_names[-2] if len(critic_linear_names) >= 2 else (
         critic_linear_names[-1] if critic_linear_names else None
     )

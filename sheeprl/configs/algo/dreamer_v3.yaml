@@ -162,3 +162,12 @@ critic:
 # Player agent (it interacts with the environment)
 player:
   discrete_size: ${algo.world_model.discrete_size}
+
+# Dormant neurons monitoring
+dormant:
+  enabled: True
+  tau: 0.25
+  interval: 100
+  batch_size: 256
+  sequence_length: ${algo.per_rank_sequence_length}
+  num_batches: 1

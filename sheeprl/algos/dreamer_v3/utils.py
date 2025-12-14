@@ -33,6 +33,21 @@ AGGREGATOR_KEYS = {
     "Grads/world_model",
     "Grads/actor",
     "Grads/critic",
+    "Dormant/world_all",
+    "Dormant/world_encoder_cnn",
+    "Dormant/world_encoder_mlp",
+    "Dormant/world_rssm_recurrent_mlp",
+    "Dormant/world_rssm_recurrent_gru",
+    "Dormant/world_rssm_transition",
+    "Dormant/world_rssm_representation",
+    "Dormant/world_decoder_cnn",
+    "Dormant/world_decoder_mlp",
+    "Dormant/world_reward",
+    "Dormant/world_continue",
+    "Dormant/actor_all",
+    "Dormant/actor_penultimate",
+    "Dormant/critic_all",
+    "Dormant/critic_penultimate",
 }
 MODELS_TO_REGISTER = {"world_model", "actor", "critic", "target_critic", "moments"}
 

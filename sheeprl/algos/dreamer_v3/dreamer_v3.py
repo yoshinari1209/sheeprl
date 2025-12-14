@@ -20,9 +20,10 @@ from lightning.fabric.wrappers import _FabricModule
 from torch import Tensor
 from torch.distributions import Distribution, Independent, OneHotCategorical
 from torch.optim import Optimizer
-from torchmetrics import SumMetric
+from torchmetrics import MeanMetric, SumMetric
 
 from sheeprl.algos.dreamer_v3.agent import WorldModel, build_agent
+from sheeprl.algos.dreamer_v3.dormant import measure_dormant_neurons_dreamer_v3
 from sheeprl.algos.dreamer_v3.loss import reconstruction_loss
 from sheeprl.algos.dreamer_v3.utils import Moments, compute_lambda_values, prepare_obs, test
 from sheeprl.data.buffers import EnvIndependentReplayBuffer, SequentialReplayBuffer
@@ -505,6 +506,7 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):
     policy_step = state["iter_num"] * cfg.env.num_envs if cfg.checkpoint.resume_from else 0
     last_log = state["last_log"] if cfg.checkpoint.resume_from else 0
     last_checkpoint = state["last_checkpoint"] if cfg.checkpoint.resume_from else 0
+    last_dormant = state.get("last_dormant", 0) if cfg.checkpoint.resume_from else 0
     policy_steps_per_iter = int(cfg.env.num_envs * fabric.world_size)
     total_iters = int(cfg.algo.total_steps // policy_steps_per_iter) if not cfg.dry_run else 1
     learning_starts = cfg.algo.learning_starts // policy_steps_per_iter if not cfg.dry_run else 0
@@ -727,6 +729,52 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):
                         cumulative_per_rank_gradient_steps += 1
                     train_step += world_size
 
+        # Dormant neurons metrics
+        if (
+            cfg.algo.dormant.enabled
+            and policy_step - last_dormant >= cfg.algo.dormant.interval
+            and iter_num >= learning_starts
+            and aggregator
+            and not aggregator.disabled
+        ):
+            try:
+                dormant_data = rb.sample_tensors(
+                    cfg.algo.dormant.batch_size,
+                    sequence_length=cfg.algo.dormant.sequence_length,
+                    n_samples=cfg.algo.dormant.num_batches,
+                    dtype=None,
+                    device=fabric.device,
+                    from_numpy=cfg.buffer.from_numpy,
+                )
+            except Exception:
+                dormant_data = None
+            if dormant_data:
+                aggregated_dormant: Dict[str, float] = {}
+                n_samples = dormant_data["actions"].shape[0]
+                for i in range(n_samples):
+                    dormant_batch = {k: v[i].float() for k, v in dormant_data.items()}
+                    measurements = measure_dormant_neurons_dreamer_v3(
+                        world_model,
+                        actor,
+                        critic,
+                        dormant_batch,
+                        cfg,
+                        actions_dim,
+                        tau=cfg.algo.dormant.tau,
+                    )
+                    for key, value in measurements.items():
+                        aggregated_dormant[key] = aggregated_dormant.get(key, 0.0) + value
+                if aggregated_dormant:
+                    for key in aggregated_dormant:
+                        aggregated_dormant[key] /= max(1, n_samples)
+                    if aggregator and not aggregator.disabled:
+                        for key, value in aggregated_dormant.items():
+                            metric_key = f"Dormant/{key}"
+                            if metric_key not in aggregator.metrics:
+                                aggregator.add(metric_key, MeanMetric(sync_on_compute=cfg.metric.sync_on_compute))
+                            aggregator.update(metric_key, value)
+                last_dormant = policy_step
+
         # Log metrics
         if cfg.metric.log_level > 0 and (policy_step - last_log >= cfg.metric.log_every or iter_num == total_iters):
             # Sync distributed metrics
@@ -781,6 +829,7 @@ def main(fabric: Fabric, cfg: Dict[str, Any]):
                 "batch_size": cfg.algo.per_rank_batch_size * fabric.world_size,
                 "last_log": last_log,
                 "last_checkpoint": last_checkpoint,
+                "last_dormant": last_dormant,
             }
             ckpt_path = log_dir + f"/checkpoint/ckpt_{policy_step}_{fabric.global_rank}.ckpt"
             fabric.call(

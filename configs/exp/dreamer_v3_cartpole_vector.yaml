@@ -18,6 +18,13 @@ algo:
   total_steps: 100_000
   per_rank_batch_size: 16
   per_rank_sequence_length: 32
+  dormant:
+    enabled: true        # 休眠ニューロン計測を有効化
+    tau: 0.25            # 休眠とみなすスコア閾値
+    interval: 100        # 何ステップごとに計測するか
+    batch_size: 256      # 計測に使うサンプルバッチサイズ
+    sequence_length: ${algo.per_rank_sequence_length}  # 計測用シーケンス長
+    num_batches: 1       # 計測で繰り返し取るバッチ数
   cnn_keys:
     encoder: []
     decoder: []
